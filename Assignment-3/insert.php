@@ -1,46 +1,30 @@
 <?php
-require "connection.php";
 
-
-$interest=$_POST["interest"];
-$education=$_POST["education"];
-$profession=$_POST["profession"];
-$hobby=$_POST["hobby"];
-
-$sql="INSERT INTO `profilecompletion`(`interest`,`education`,`profession`,`hobby`) VALUES('$interest','$education','$profession','$hobby')";
-$result= mysqli_query($connect,$sql);
-
-
-if (isset($_GET['id'])) {
-    $id = $_GET['id'];
-
-    $query = "SELECT * FROM profilecompletion WHERE id = '$id'";
-    $result = mysqli_query($connection, $query);
-
-    if (mysqli_num_rows($result) > 0) {
-        $profile = mysqli_fetch_assoc($result);
-        $ProfileData = array($profile['interest'], $profile['education'], $profile['profession'], $profile['hobby']);
-        $ProfilePercentage = calculate($ProfileData);
-        if($ProfilePercentage>0){
-            echo "your profile is " . $ProfilePercentage . "completed";
-        }
-    } else {
-        header("Location: profile.php");
-        exit();
-    }
-} else {
-    header("Location: profile.php");
+if($_SERVER["REQUEST_METHOD"] == "GET")
+{
+    echo "you need to post on this page";
     exit();
 }
 
-function calculate($array)
-{
-    $total = 4; 
-    $userFilled = count(array_filter($array));
+require "connection.php";
 
-    return ($userFilled / $total) * 100;
+$fields = ["interest","education", "profession", "hobby"];
+
+$profile_string = "";
+$cnt = 0;
+foreach($fields as $field)
+{
+    if($_POST[$field] and $_POST[$field] != "") $cnt+=1;
+    $profile_string = $profile_string . "&" . $_POST[$field];
 }
 
-  mysqli_close($connect);
+$profile_string = ltrim($profile_string, "&");
+$profile_completion = fdiv($cnt, 4);
+session_start();
+$_SESSION["profile_completion"] = $profile_completion;
+$sql = "update profile set profile=\"" . $profile_string . "\" where id=" . $_SESSION["id"] . ";";
+$result = mysqli_query($connect, $sql);
+
+header("Location: profile.php");
 
 ?>
